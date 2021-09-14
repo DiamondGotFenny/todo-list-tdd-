@@ -2,19 +2,18 @@ import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ToDoList from './To-do-list';
 import mockData from '../mockData/mockData';
+
+beforeAll(() => jest.spyOn(window, 'fetch'));
+
 afterEach(cleanup);
 
-test('renders ul', () => {
-  render(<ToDoList todos={mockData} />);
-  const ulElement = document.querySelector('ul');
-  expect(ulElement).toBeInTheDocument();
-});
 describe('todo list test', () => {
-  test('should show the to do title in li', () => {
+  test('should show the to do title', async () => {
     render(<ToDoList todos={mockData} />);
-    mockData.forEach((todo) => {
-      const todoTitle = screen.getByText(todo.title);
-      expect(todoTitle).toBeInTheDocument();
-    });
+    const listItems = await screen.findAllByRole('listitem');
+    expect(listItems.length).toBe(mockData.length);
+    mockData.forEach((d) =>
+      expect(screen.getByText(d.title)).toBeInTheDocument()
+    );
   });
 });

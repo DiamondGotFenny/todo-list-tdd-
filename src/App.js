@@ -12,8 +12,14 @@ function App() {
       ).then((response) => response.json());
       setTodos(result.slice(0, 5));
     }
-
-    fetchData();
+    try {
+      fetchData();
+    } catch (error) {
+      console.log(error);
+    }
+    return () => {
+      setTodos([]); //cleanup
+    };
   }, []);
   return (
     <div className="App">
