@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import App from './App';
 import server from './mockAPI/server';
 import { rest } from 'msw';
@@ -52,6 +52,7 @@ describe('render TodoList Component', () => {
     const errorMessage = await screen.findByText(testErrorMessage);
     expect(errorMessage).toBeInTheDocument();
   });
+
   test('should render 5 list items', async () => {
     render(<App />);
     const listItem = await screen.findAllByRole('listitem');
@@ -90,5 +91,44 @@ describe('render AddTodo Component', () => {
     render(<App />);
     const textInput = screen.getByPlaceholderText(/Enter Your New todo here/i);
     expect(textInput).toBeInTheDocument();
+  });
+  test('should add new todo item when "Add new todo" button is clicked', async () => {
+    render(<App />);
+    const textInput = screen.getByPlaceholderText(/Enter Your New todo here/i);
+    fireEvent.change(textInput, { target: { value: 'running' } });
+    const addButton = screen.getByText(/Add new todo/i);
+    addButton.click();
+    const listItems = await screen.findAllByRole('listitem');
+    expect(screen.getByText(/running/i)).toBeInTheDocument();
+  });
+  test('should render error message "Please enter a todo" when "Add new todo" button is clicked and text is empty', () => {
+    render(<App />);
+    const textInput = screen.getByPlaceholderText(/Enter Your New todo here/i);
+    fireEvent.change(textInput, { target: { value: '' } });
+    const addButton = screen.getByText(/Add new todo/i);
+    addButton.click();
+    const testErrorMessage = 'Please enter a todo';
+    const errorMessage = screen.getByText(testErrorMessage);
+    expect(errorMessage).toBeInTheDocument();
+  });
+  test('should render error message "Adding New Todo Failed" when post new todo fail', async () => {
+    server.use(
+      rest.post(
+        'https://jsonplaceholder.typicode.com/todos',
+        (req, res, ctx) => {
+          return res(
+            ctx.status(500),
+            ctx.json({ message: 'Adding New Todo Failed' })
+          );
+        }
+      )
+    );
+    render(<App />);
+    const textInput = screen.getByPlaceholderText(/Enter Your New todo here/i);
+    fireEvent.change(textInput, { target: { value: 'running' } });
+    const addButton = screen.getByText(/Add new todo/i);
+    addButton.click();
+    const errorMessage = await screen.findByText('Adding New Todo Failed');
+    expect(errorMessage).toBeInTheDocument();
   });
 });
