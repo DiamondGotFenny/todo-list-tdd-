@@ -4,6 +4,12 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+//mock a api server by using msw
+if (process.env.NODE_ENV === 'development') {
+  const { worker } = require('./mockAPI/browser');
+  worker.start();
+}
+
 ReactDOM.render(
   <React.StrictMode>
     <App />
