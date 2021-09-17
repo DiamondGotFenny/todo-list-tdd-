@@ -7,17 +7,7 @@ function App() {
   const [ErrorMsg, setErrorMsg] = useState(null);
   const [inputNewTodo, setInputNewTodo] = useState('');
   const [AddFailMsg, setAddFailMsg] = useState(null);
-  const fetchData = async () => {
-    try {
-      const response = await fetch(
-        'https://jsonplaceholder.typicode.com/todos'
-      );
-      const result = await response.json();
-      setTodos(result.slice(0, 5));
-    } catch (error) {
-      setErrorMsg('Fetching Data Failed');
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleCheckboxChange = (id) => {
     const newTodos = todos.map((todo) => {
@@ -36,8 +26,10 @@ function App() {
 
   const handleAddNewTodo = async (e) => {
     e.preventDefault();
+    setLoading(true);
     if (inputNewTodo.trim() === '') {
       setAddFailMsg('Please enter a todo');
+      setLoading(false);
     }
     const newTodo = {
       id: Math.floor(Math.random() * 10000) + 1,
@@ -63,15 +55,36 @@ function App() {
       const result = await response.json();
 
       result.id = newTodo.id;
+
       setTodos([...todos, result]);
+      setLoading(false);
       setInputNewTodo('');
     } catch (error) {
       setAddFailMsg('Adding New Todo Failed');
+      setLoading(false);
     }
   };
 
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          'https://jsonplaceholder.typicode.com/todos'
+        );
+        const result = await response.json();
+        setLoading(false);
+        setTodos(result.slice(0, 5));
+      } catch (error) {
+        setErrorMsg('Fetching Data Failed');
+        setLoading(false);
+      }
+    };
     fetchData();
+    return () => {
+      setLoading(false);
+      setTodos([]);
+    };
   }, []);
 
   return (
@@ -84,7 +97,9 @@ function App() {
           placeholder="Enter Your New todo here"
           onChange={(e) => setInputNewTodo(e.target.value)}
         />
-        <button type="submit">Add new todo</button>
+        <button type="submit" disabled={loading}>
+          Add new todo
+        </button>
       </form>
       {ErrorMsg && <h2 className="error">{ErrorMsg}</h2>}
       {todos.length === 0 && !ErrorMsg && <h2>No items</h2>}

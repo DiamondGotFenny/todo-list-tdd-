@@ -1,4 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitForElementToBeRemoved,
+} from '@testing-library/react';
 import App from './App';
 import server from './mockAPI/server';
 import { rest } from 'msw';
@@ -55,6 +60,7 @@ describe('render TodoList Component', () => {
 
   test('should render 5 list items', async () => {
     render(<App />);
+    await waitForElementToBeRemoved(() => screen.getByText(/Loading.../i));
     const listItem = await screen.findAllByRole('listitem');
     expect(listItem.length).toBe(5);
     expect(screen.getByText(/Eat breakfast/i)).toBeInTheDocument();
@@ -94,15 +100,18 @@ describe('render AddTodo Component', () => {
   });
   test('should add new todo item when "Add new todo" button is clicked', async () => {
     render(<App />);
+    await waitForElementToBeRemoved(() => screen.getByText(/Loading.../i));
     const textInput = screen.getByPlaceholderText(/Enter Your New todo here/i);
     fireEvent.change(textInput, { target: { value: 'running' } });
     const addButton = screen.getByText(/Add new todo/i);
     addButton.click();
-    const listItems = await screen.findAllByRole('listitem');
-    expect(screen.getByText(/running/i)).toBeInTheDocument();
+    expect(addButton).toBeDisabled();
+    expect(await screen.findByText(/running/i)).toBeInTheDocument();
+    expect(addButton).not.toBeDisabled();
   });
-  test('should render error message "Please enter a todo" when "Add new todo" button is clicked and text is empty', () => {
+  test('should render error message "Please enter a todo" when "Add new todo" button is clicked and text is empty', async () => {
     render(<App />);
+    await waitForElementToBeRemoved(() => screen.getByText(/Loading.../i));
     const textInput = screen.getByPlaceholderText(/Enter Your New todo here/i);
     fireEvent.change(textInput, { target: { value: '' } });
     const addButton = screen.getByText(/Add new todo/i);
@@ -124,11 +133,14 @@ describe('render AddTodo Component', () => {
       )
     );
     render(<App />);
+    await waitForElementToBeRemoved(() => screen.getByText(/Loading.../i));
     const textInput = screen.getByPlaceholderText(/Enter Your New todo here/i);
     fireEvent.change(textInput, { target: { value: 'running' } });
     const addButton = screen.getByText(/Add new todo/i);
     addButton.click();
+    expect(addButton).toBeDisabled();
     const errorMessage = await screen.findByText('Adding New Todo Failed');
     expect(errorMessage).toBeInTheDocument();
+    expect(addButton).not.toBeDisabled();
   });
 });
